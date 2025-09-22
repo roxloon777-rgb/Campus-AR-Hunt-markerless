@@ -8,15 +8,16 @@
   <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    #takeSelfie {
-      position: fixed; 
-      bottom: 20px; 
-      left: 50%; 
+    button {
+      position: fixed;
+      left: 50%;
       transform: translateX(-50%);
       z-index: 1000;
       padding: 10px 20px;
       font-size: 18px;
     }
+    #takeSelfie { bottom: 20px; }
+    #uploadPadlet { bottom: 70px; display:none; }
   </style>
 </head>
 <body>
@@ -26,21 +27,22 @@
   embedded
   arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
 >
-
   <a-camera gps-camera rotation-reader></a-camera>
 
-  <a-entity id="lawObj" gps-entity-place="latitude: -26.688730; longitude: 27.091206" 
-            gltf-model="assets/models/medical_mask.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
+<!-- GPS Objects with correct GLB files -->
+<a-entity id="lawObj" gps-entity-place="latitude: -26.688730; longitude: 27.091206" 
+          gltf-model="assets/models/medical_mask.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
-  <a-entity id="loversObj" gps-entity-place="latitude: -26.687913; longitude: 27.092682" 
-            gltf-model="assets/models/medical_syringe.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
+<a-entity id="loversObj" gps-entity-place="latitude: -26.687913; longitude: 27.092682" 
+          gltf-model="assets/models/medical_syringe.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
-  <a-entity id="treeObj" gps-entity-place="latitude: -26.688911; longitude: 27.092593" 
-            gltf-model="assets/models/doctors_stethoscope.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
+<a-entity id="treeObj" gps-entity-place="latitude: -26.688911; longitude: 27.092593" 
+          gltf-model="assets/models/doctors_stethoscope.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
 </a-scene>
 
 <button id="takeSelfie">Take Selfie</button>
+<button id="uploadPadlet">Upload to Padlet</button>
 
 <script>
   const objects = [
@@ -51,6 +53,8 @@
 
   const SHOW_DISTANCE = 30; // meters
   const collected = JSON.parse(localStorage.getItem('collected') || '{}');
+  let lastSelfieData = null;
+  let lastCollectedObject = null;
 
   function getDistance(lat1, lon1, lat2, lon2) {
     function toRad(x) { return x * Math.PI / 180; }
@@ -64,8 +68,6 @@
     return R * c;
   }
 
-  const highlightParam = new URLSearchParams(window.location.search).get('highlight');
-
   navigator.geolocation.watchPosition(pos => {
     const userLat = pos.coords.latitude;
     const userLon = pos.coords.longitude;
@@ -73,28 +75,46 @@
     objects.forEach(obj => {
       const distance = getDistance(userLat, userLon, obj.lat, obj.lon);
 
-      // Show object if within distance or highlighted
-      if(distance <= SHOW_DISTANCE || obj.id === highlightParam) {
+      // Show object if within distance
+      if(distance <= SHOW_DISTANCE) {
         obj.el.setAttribute('visible','true');
 
-        // Mark as collected if within distance
-        if(distance <= SHOW_DISTANCE) {
+        // Mark as collected
+        if(!collected[obj.id]) {
           collected[obj.id] = true;
           localStorage.setItem('collected', JSON.stringify(collected));
+          alert(`You have collected: ${obj.id.toUpperCase()}!`);
         }
+
+        lastCollectedObject = obj.id; // keep track for selfie upload
       } else {
         obj.el.setAttribute('visible','false');
       }
     });
   }, err => console.error(err), { enableHighAccuracy: true });
 
-  // Selfie capture
+  // Take selfie
   document.getElementById('takeSelfie').addEventListener('click', () => {
+    if(!lastCollectedObject) {
+      alert('Move closer to an object to take a selfie!');
+      return;
+    }
     const scene = document.querySelector('a-scene');
     scene.components.screenshot.capture('perspective', (dataUri) => {
-      window.open(dataUri);
-      // Optional Padlet upload here
+      lastSelfieData = dataUri;
+      document.getElementById('uploadPadlet').style.display = 'block';
+      window.open(dataUri); // open selfie in new tab
     });
+  });
+
+  // Upload to Padlet
+  document.getElementById('uploadPadlet').addEventListener('click', () => {
+    if(!lastSelfieData) {
+      alert('Take a selfie first!');
+      return;
+    }
+    window.open('https://padlet.com/roxloon777/campus-hunt-wall-of-fame-gkek97r08b9p9047', '_blank');
+    alert('Drag your selfie from the opened tab onto the Padlet wall.');
   });
 </script>
 
