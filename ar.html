@@ -1,68 +1,102 @@
-<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Campus AR Hunt</title>
-    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    <style>
-      body { margin:0; overflow:hidden; }
-      #checkin { display:none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); padding: 10px 20px; font-size: 18px; background: #0078d7; color: white; border-radius: 8px; border: none; cursor: pointer; z-index: 10; }
-      #hint { position: absolute; top: 12px; left: 12px; color: white; z-index: 10; font-weight:600; }
-    </style>
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AR Treasure Hunt</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar-nft.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    #takeSelfie {
+      position: fixed; 
+      bottom: 20px; 
+      left: 50%; 
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 10px 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
 
-    <div id="hint">Point camera at a campus marker</div>
-    <button id="checkin">Check-in</button>
+<a-scene
+  vr-mode-ui="enabled: false"
+  embedded
+  arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false;"
+>
 
-    <a-scene embedded arjs='sourceType: webcam;'>
+  <a-camera gps-camera rotation-reader></a-camera>
 
-      <a-marker type="pattern" url="markers/library.patt" id="marker-library"
-                data-marker-name="Library"
-                data-checkin-url="https://forms.gle/placeholderLibrary">
-        <a-box position="0 0.4 0" rotation="0 45 0" scale="0.5 0.5 0.5"></a-box>
-        <a-text value="Library" position="0 1 0" align="center"></a-text>
-      </a-marker>
+  <a-entity id="lawObj" gps-entity-place="latitude: -26.688730; longitude: 27.091206" 
+            gltf-model="assets/models/medical_mask.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
-      <a-marker type="pattern" url="markers/sports.patt" id="marker-sports"
-                data-marker-name="SportsField"
-                data-checkin-url="https://forms.gle/placeholderSports">
-        <a-sphere position="0 0.4 0"></a-sphere>
-        <a-text value="Sports Field" position="0 1 0" align="center"></a-text>
-      </a-marker>
+  <a-entity id="loversObj" gps-entity-place="latitude: -26.687913; longitude: 27.092682" 
+            gltf-model="assets/models/medical_syringe.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
-      <a-marker type="pattern" url="markers/admin.patt" id="marker-admin"
-                data-marker-name="AdminBuilding"
-                data-checkin-url="https://forms.gle/placeholderAdmin">
-        <a-cone position="0 0.4 0"></a-cone>
-        <a-text value="Admin" position="0 1 0" align="center"></a-text>
-      </a-marker>
+  <a-entity id="treeObj" gps-entity-place="latitude: -26.688911; longitude: 27.092593" 
+            gltf-model="assets/models/doctors_stethoscope.glb" scale="1 1 1" rotation="0 180 0" visible="false"></a-entity>
 
-      <a-entity camera></a-entity>
-    </a-scene>
+</a-scene>
 
-    <script>
-      const checkinBtn = document.getElementById('checkin');
-      let currentCheckinUrl = null;
+<button id="takeSelfie">Take Selfie</button>
 
-      document.querySelectorAll('a-marker').forEach(marker => {
-        marker.addEventListener('markerFound', () => {
-          const name = marker.getAttribute('data-marker-name') || 'Marker';
-          currentCheckinUrl = marker.getAttribute('data-checkin-url') || null;
-          checkinBtn.style.display = 'block';
-          checkinBtn.textContent = 'Check-in: ' + name;
-        });
-        marker.addEventListener('markerLost', () => {
-          checkinBtn.style.display = 'none';
-          currentCheckinUrl = null;
-        });
-      });
+<script>
+  const objects = [
+    {id:'law', el: document.getElementById('lawObj'), lat: -26.688730, lon: 27.091206},
+    {id:'lovers', el: document.getElementById('loversObj'), lat: -26.687913, lon: 27.092682},
+    {id:'tree', el: document.getElementById('treeObj'), lat: -26.688911, lon: 27.092593}
+  ];
 
-      checkinBtn.addEventListener('click', () => {
-        if (currentCheckinUrl) window.open(currentCheckinUrl, '_blank');
-      });
-    </script>
-  </body>
+  const SHOW_DISTANCE = 30; // meters
+  const collected = JSON.parse(localStorage.getItem('collected') || '{}');
+
+  function getDistance(lat1, lon1, lat2, lon2) {
+    function toRad(x) { return x * Math.PI / 180; }
+    const R = 6371e3;
+    const φ1 = toRad(lat1);
+    const φ2 = toRad(lat2);
+    const Δφ = toRad(lat2 - lat1);
+    const Δλ = toRad(lon2 - lon1);
+    const a = Math.sin(Δφ/2)**2 + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  const highlightParam = new URLSearchParams(window.location.search).get('highlight');
+
+  navigator.geolocation.watchPosition(pos => {
+    const userLat = pos.coords.latitude;
+    const userLon = pos.coords.longitude;
+
+    objects.forEach(obj => {
+      const distance = getDistance(userLat, userLon, obj.lat, obj.lon);
+
+      // Show object if within distance or highlighted
+      if(distance <= SHOW_DISTANCE || obj.id === highlightParam) {
+        obj.el.setAttribute('visible','true');
+
+        // Mark as collected if within distance
+        if(distance <= SHOW_DISTANCE) {
+          collected[obj.id] = true;
+          localStorage.setItem('collected', JSON.stringify(collected));
+        }
+      } else {
+        obj.el.setAttribute('visible','false');
+      }
+    });
+  }, err => console.error(err), { enableHighAccuracy: true });
+
+  // Selfie capture
+  document.getElementById('takeSelfie').addEventListener('click', () => {
+    const scene = document.querySelector('a-scene');
+    scene.components.screenshot.capture('perspective', (dataUri) => {
+      window.open(dataUri);
+      // Optional Padlet upload here
+    });
+  });
+</script>
+
+</body>
 </html>
