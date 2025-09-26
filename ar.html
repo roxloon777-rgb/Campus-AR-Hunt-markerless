@@ -30,8 +30,8 @@
   <a-camera gps-camera rotation-reader></a-camera>
 
 <!-- GPS Objects with correct GLB files -->
-<a-entity id="lawObj" gps-entity-place="latitude: -26.689694; longitude: 27.092619" 
-          gltf-model="assets/models/medical_mask.glb" scale="1 1 1" rotation="0 180 0" position="0 1.5 0"></a-entity>
+<a-entity id="lawObj" gps-entity-place="latitude: -26.689666; longitude: 27.092627" 
+          gltf-model="assets/models/medical_mask.glb" scale="1 1 1" rotation="0 180 0"></a-entity>
 
 <a-entity id="loversObj" gps-entity-place="latitude: -26.687913; longitude: 27.092682" 
           gltf-model="assets/models/medical_syringe.glb" scale="1 1 1" rotation="0 180 0" position="0 1.5 0"></a-entity>
@@ -46,12 +46,12 @@
 
 <script>
   const objects = [
-    {id:'law', el: document.getElementById('lawObj'), lat: -26.688730, lon: 27.091206},
+    {id:'law', el: document.getElementById('lawObj'), lat: -26.689666, lon: 27.092627},
     {id:'lovers', el: document.getElementById('loversObj'), lat: -26.687913, lon: 27.092682},
     {id:'tree', el: document.getElementById('treeObj'), lat: -26.688911, lon: 27.092593}
   ];
 
-  const SHOW_DISTANCE = 30; // meters
+  const SHOW_DISTANCE = 50; // meters
   const collected = JSON.parse(localStorage.getItem('collected') || '{}');
   let lastSelfieData = null;
   let lastCollectedObject = null;
