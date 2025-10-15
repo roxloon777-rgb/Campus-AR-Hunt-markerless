@@ -45,7 +45,7 @@
     {id:'tree', lat: -26.688875, lon: 27.092535, model:"models/meet_mira.glb"}
   ];
 
-  const SHOW_DISTANCE = 5; // meters
+  const SHOW_DISTANCE = 2; // meters
   const collected = JSON.parse(localStorage.getItem('collected') || '{}');
   let lastSelfieData = null;
   let lastCollectedObject = null;
@@ -85,7 +85,7 @@
         // 3D model
         const model = document.createElement('a-entity');
         model.setAttribute('gltf-model', obj.model);
-        model.setAttribute('scale', '2 2 2'); // safe size
+        model.setAttribute('scale', '1 1 1'); // safe size
         model.setAttribute('rotation', '0 180 0');
         container.appendChild(model);
 
