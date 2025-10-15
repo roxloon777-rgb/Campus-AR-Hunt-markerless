@@ -40,9 +40,9 @@
 <script>
   // Treasure hunt locations
   const objects = [
-    {id:'law', lat: -26.689666, lon: 27.092627, model:"assets/models/medical_mask.glb"},
-    {id:'lovers', lat: -26.687913, lon: 27.092682, model:"assets/models/medical_syringe.glb"},
-    {id:'tree', lat: -26.688911, lon: 27.092593, model:"assets/models/doctors_stethoscope.glb"}
+    {id:'law', lat: -26.689666, lon: 27.092627, model:"models/meet_mira.glb"},
+    {id:'lovers', lat: -26.687913, lon: 27.092682, model:"models/meet_mira.glb"},
+    {id:'tree', lat: -26.688911, lon: 27.092593, model:"models/meet_mira.glb"}
   ];
 
   const SHOW_DISTANCE = 80; // meters
@@ -85,7 +85,7 @@
         // 3D model
         const model = document.createElement('a-entity');
         model.setAttribute('gltf-model', obj.model);
-        model.setAttribute('scale', '0.5 0.5 0.5'); // safe size
+        model.setAttribute('scale', '2 2 2'); // safe size
         model.setAttribute('rotation', '0 180 0');
         container.appendChild(model);
 
